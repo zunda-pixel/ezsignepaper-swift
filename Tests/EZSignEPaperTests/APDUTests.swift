@@ -1,67 +1,75 @@
-import XCTest
+import Testing
+import Foundation
 @testable import EZSignEPaper
 
-final class APDUTests: XCTestCase {
-    func testAPDUSerialization() {
+@Suite("APDU Tests")
+struct APDUTests {
+    @Test("APDU serialization with data")
+    func apduSerialization() {
         let apdu = APDU(cla: 0xF0, ins: 0xD3, p1: 0x00, p2: 0x01, data: Data([0x01, 0x02, 0x03]))
         let serialized = apdu.serialize()
         
         // Should be: CLA INS P1 P2 Lc Data...
-        XCTAssertEqual(serialized.count, 8) // 5 header + 3 data
-        XCTAssertEqual(serialized[0], 0xF0) // CLA
-        XCTAssertEqual(serialized[1], 0xD3) // INS
-        XCTAssertEqual(serialized[2], 0x00) // P1
-        XCTAssertEqual(serialized[3], 0x01) // P2
-        XCTAssertEqual(serialized[4], 0x03) // Lc (length)
-        XCTAssertEqual(serialized[5], 0x01) // Data
-        XCTAssertEqual(serialized[6], 0x02)
-        XCTAssertEqual(serialized[7], 0x03)
+        #expect(serialized.count == 8) // 5 header + 3 data
+        #expect(serialized[0] == 0xF0) // CLA
+        #expect(serialized[1] == 0xD3) // INS
+        #expect(serialized[2] == 0x00) // P1
+        #expect(serialized[3] == 0x01) // P2
+        #expect(serialized[4] == 0x03) // Lc (length)
+        #expect(serialized[5] == 0x01) // Data
+        #expect(serialized[6] == 0x02)
+        #expect(serialized[7] == 0x03)
     }
     
-    func testAPDUSerializationNoData() {
+    @Test("APDU serialization without data")
+    func apduSerializationNoData() {
         let apdu = APDU(cla: 0x00, ins: 0x20, p1: 0x00, p2: 0x01)
         let serialized = apdu.serialize()
         
-        XCTAssertEqual(serialized.count, 4) // Just header
-        XCTAssertEqual(serialized[0], 0x00)
-        XCTAssertEqual(serialized[1], 0x20)
-        XCTAssertEqual(serialized[2], 0x00)
-        XCTAssertEqual(serialized[3], 0x01)
+        #expect(serialized.count == 4) // Just header
+        #expect(serialized[0] == 0x00)
+        #expect(serialized[1] == 0x20)
+        #expect(serialized[2] == 0x00)
+        #expect(serialized[3] == 0x01)
     }
     
-    func testAPDUResponseSuccess() {
+    @Test("APDU response success")
+    func apduResponseSuccess() {
         let response = APDUResponse(data: Data([0x01, 0x02]), sw1: 0x90, sw2: 0x00)
         
-        XCTAssertTrue(response.isSuccess)
-        XCTAssertEqual(response.statusWord, 0x9000)
-        XCTAssertEqual(response.data.count, 2)
+        #expect(response.isSuccess == true)
+        #expect(response.statusWord == 0x9000)
+        #expect(response.data.count == 2)
     }
     
-    func testAPDUResponseFailure() {
+    @Test("APDU response failure")
+    func apduResponseFailure() {
         let response = APDUResponse(data: Data(), sw1: 0x67, sw2: 0x00)
         
-        XCTAssertFalse(response.isSuccess)
-        XCTAssertEqual(response.statusWord, 0x6700)
+        #expect(response.isSuccess == false)
+        #expect(response.statusWord == 0x6700)
     }
     
-    func testAuthenticateCommand() {
+    @Test("Authenticate command")
+    func authenticateCommand() {
         let apdu = EZSignEPaperCommand.authenticate()
         let serialized = apdu.serialize()
         
         // Expected: 0020 00010420091210
-        XCTAssertEqual(serialized[0], 0x00) // CLA
-        XCTAssertEqual(serialized[1], 0x20) // INS
-        XCTAssertEqual(serialized[2], 0x00) // P1
-        XCTAssertEqual(serialized[3], 0x01) // P2
-        XCTAssertEqual(serialized[4], 0x05) // Lc = 5
-        XCTAssertEqual(serialized[5], 0x04)
-        XCTAssertEqual(serialized[6], 0x20)
-        XCTAssertEqual(serialized[7], 0x09)
-        XCTAssertEqual(serialized[8], 0x12)
-        XCTAssertEqual(serialized[9], 0x10)
+        #expect(serialized[0] == 0x00) // CLA
+        #expect(serialized[1] == 0x20) // INS
+        #expect(serialized[2] == 0x00) // P1
+        #expect(serialized[3] == 0x01) // P2
+        #expect(serialized[4] == 0x05) // Lc = 5
+        #expect(serialized[5] == 0x04)
+        #expect(serialized[6] == 0x20)
+        #expect(serialized[7] == 0x09)
+        #expect(serialized[8] == 0x12)
+        #expect(serialized[9] == 0x10)
     }
     
-    func testImageDataTransferCommand() {
+    @Test("Image data transfer command")
+    func imageDataTransferCommand() {
         let fragmentData = Data([0x11, 0x22, 0x33])
         let apdu = EZSignEPaperCommand.imageDataTransfer(
             blockNo: 2,
@@ -71,41 +79,43 @@ final class APDUTests: XCTestCase {
         )
         let serialized = apdu.serialize()
         
-        XCTAssertEqual(serialized[0], 0xF0) // CLA
-        XCTAssertEqual(serialized[1], 0xD3) // INS
-        XCTAssertEqual(serialized[2], 0x00) // P1
-        XCTAssertEqual(serialized[3], 0x01) // P2 (last fragment)
-        XCTAssertEqual(serialized[4], 0x05) // Lc = 2 + 3
-        XCTAssertEqual(serialized[5], 0x02) // blockNo
-        XCTAssertEqual(serialized[6], 0x00) // fragNo
-        XCTAssertEqual(serialized[7], 0x11) // data
-        XCTAssertEqual(serialized[8], 0x22)
-        XCTAssertEqual(serialized[9], 0x33)
+        #expect(serialized[0] == 0xF0) // CLA
+        #expect(serialized[1] == 0xD3) // INS
+        #expect(serialized[2] == 0x00) // P1
+        #expect(serialized[3] == 0x01) // P2 (last fragment)
+        #expect(serialized[4] == 0x05) // Lc = 2 + 3
+        #expect(serialized[5] == 0x02) // blockNo
+        #expect(serialized[6] == 0x00) // fragNo
+        #expect(serialized[7] == 0x11) // data
+        #expect(serialized[8] == 0x22)
+        #expect(serialized[9] == 0x33)
     }
     
-    func testStartUpdateCommand() {
+    @Test("Start update command")
+    func startUpdateCommand() {
         let apdu = EZSignEPaperCommand.startUpdate()
         let serialized = apdu.serialize()
         
         // Expected: F0D4 858000
-        XCTAssertEqual(serialized[0], 0xF0)
-        XCTAssertEqual(serialized[1], 0xD4)
-        XCTAssertEqual(serialized[4], 0x03) // Lc = 3
-        XCTAssertEqual(serialized[5], 0x85)
-        XCTAssertEqual(serialized[6], 0x80)
-        XCTAssertEqual(serialized[7], 0x00)
+        #expect(serialized[0] == 0xF0)
+        #expect(serialized[1] == 0xD4)
+        #expect(serialized[4] == 0x03) // Lc = 3
+        #expect(serialized[5] == 0x85)
+        #expect(serialized[6] == 0x80)
+        #expect(serialized[7] == 0x00)
     }
     
-    func testPollUpdateStatusCommand() {
+    @Test("Poll update status command")
+    func pollUpdateStatusCommand() {
         let apdu = EZSignEPaperCommand.pollUpdateStatus()
         let serialized = apdu.serialize()
         
         // Expected: F0DE 000001
-        XCTAssertEqual(serialized[0], 0xF0)
-        XCTAssertEqual(serialized[1], 0xDE)
-        XCTAssertEqual(serialized[4], 0x03) // Lc = 3
-        XCTAssertEqual(serialized[5], 0x00)
-        XCTAssertEqual(serialized[6], 0x00)
-        XCTAssertEqual(serialized[7], 0x01)
+        #expect(serialized[0] == 0xF0)
+        #expect(serialized[1] == 0xDE)
+        #expect(serialized[4] == 0x03) // Lc = 3
+        #expect(serialized[5] == 0x00)
+        #expect(serialized[6] == 0x00)
+        #expect(serialized[7] == 0x01)
     }
 }

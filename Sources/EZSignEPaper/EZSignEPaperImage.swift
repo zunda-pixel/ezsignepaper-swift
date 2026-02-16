@@ -74,7 +74,7 @@ public struct EZSignEPaperImage: Sendable {
 }
 
 /// Errors for EZ Sign EPaper operations
-public enum EZSignEPaperError: Error, LocalizedError, Sendable {
+public enum EZSignEPaperError: Error, LocalizedError, Sendable, Equatable {
     case invalidImageSize(String)
     case compressionFailed(String)
     case communicationError(String)

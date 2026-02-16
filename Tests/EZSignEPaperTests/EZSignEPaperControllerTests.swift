@@ -1,8 +1,11 @@
-import XCTest
+import Testing
+import Foundation
 @testable import EZSignEPaper
 
-final class EZSignEPaperControllerTests: XCTestCase {
-    func testAuthenticateSuccess() async throws {
+@Suite("EZSignEPaper Controller Tests")
+struct EZSignEPaperControllerTests {
+    @Test("Authenticate success")
+    func authenticateSuccess() async throws {
         let transceiver = MockAPDUTransceiver()
         await transceiver.setResponses([
             APDUResponse(data: Data(), sw1: 0x90, sw2: 0x00)
@@ -14,7 +17,8 @@ final class EZSignEPaperControllerTests: XCTestCase {
         // Should complete without error
     }
     
-    func testAuthenticateFailure() async {
+    @Test("Authenticate failure")
+    func authenticateFailure() async throws {
         let transceiver = MockAPDUTransceiver()
         await transceiver.setResponses([
             APDUResponse(data: Data(), sw1: 0x67, sw2: 0x00)
@@ -22,17 +26,13 @@ final class EZSignEPaperControllerTests: XCTestCase {
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         
-        do {
+        await #expect(throws: EZSignEPaperError.authenticationFailed) {
             try await controller.authenticate()
-            XCTFail("Should have thrown authentication error")
-        } catch EZSignEPaperError.authenticationFailed {
-            // Expected
-        } catch {
-            XCTFail("Unexpected error: \(error)")
         }
     }
     
-    func testStartUpdate() async throws {
+    @Test("Start update")
+    func startUpdate() async throws {
         let transceiver = MockAPDUTransceiver()
         await transceiver.setResponses([
             APDUResponse(data: Data(), sw1: 0x90, sw2: 0x00)
@@ -42,7 +42,8 @@ final class EZSignEPaperControllerTests: XCTestCase {
         try await controller.startUpdate()
     }
     
-    func testPollUpdateStatusUpdating() async throws {
+    @Test("Poll update status - updating")
+    func pollUpdateStatusUpdating() async throws {
         let transceiver = MockAPDUTransceiver()
         await transceiver.setResponses([
             APDUResponse(data: Data([0x01]), sw1: 0x90, sw2: 0x00)
@@ -51,14 +52,11 @@ final class EZSignEPaperControllerTests: XCTestCase {
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         let status = try await controller.pollUpdateStatus()
         
-        if case .updating = status {
-            // Expected
-        } else {
-            XCTFail("Expected updating status")
-        }
+        #expect(status == .updating)
     }
     
-    func testPollUpdateStatusCompleted() async throws {
+    @Test("Poll update status - completed")
+    func pollUpdateStatusCompleted() async throws {
         let transceiver = MockAPDUTransceiver()
         await transceiver.setResponses([
             APDUResponse(data: Data([0x00]), sw1: 0x90, sw2: 0x00)
@@ -67,14 +65,11 @@ final class EZSignEPaperControllerTests: XCTestCase {
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         let status = try await controller.pollUpdateStatus()
         
-        if case .completed = status {
-            // Expected
-        } else {
-            XCTFail("Expected completed status")
-        }
+        #expect(status == .completed)
     }
     
-    func testWaitForUpdateCompletion() async throws {
+    @Test("Wait for update completion")
+    func waitForUpdateCompletion() async throws {
         let transceiver = MockAPDUTransceiver()
         // First two polls return updating, third returns completed
         await transceiver.setResponses([
@@ -87,24 +82,21 @@ final class EZSignEPaperControllerTests: XCTestCase {
         try await controller.waitForUpdateCompletion(maxAttempts: 10, pollingInterval: 0.01)
     }
     
-    func testWaitForUpdateTimeout() async {
+    @Test("Wait for update timeout")
+    func waitForUpdateTimeout() async throws {
         let transceiver = MockAPDUTransceiver()
         // Always return updating
         await transceiver.setResponses(Array(repeating: APDUResponse(data: Data([0x01]), sw1: 0x90, sw2: 0x00), count: 10))
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         
-        do {
+        await #expect(throws: EZSignEPaperError.updateTimeout) {
             try await controller.waitForUpdateCompletion(maxAttempts: 5, pollingInterval: 0.01)
-            XCTFail("Should have thrown timeout error")
-        } catch EZSignEPaperError.updateTimeout {
-            // Expected
-        } catch {
-            XCTFail("Unexpected error: \(error)")
         }
     }
     
-    func testFullUpdateSequence() async throws {
+    @Test("Full update sequence")
+    func fullUpdateSequence() async throws {
         let transceiver = MockAPDUTransceiver()
         
         // Prepare responses for full sequence

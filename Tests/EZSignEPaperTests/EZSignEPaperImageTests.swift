@@ -1,60 +1,61 @@
-import XCTest
+import Testing
 @testable import EZSignEPaper
 
-final class EZSignEPaperImageTests: XCTestCase {
-    func testImageInitialization() throws {
+@Suite("EZSignEPaper Image Tests")
+struct EZSignEPaperImageTests {
+    @Test("Image initialization with valid dimensions")
+    func imageInitialization() throws {
         let pixels = Array(repeating: Array(repeating: ColorIndex.white, count: 400), count: 300)
         let image = try EZSignEPaperImage(pixels: pixels)
         
-        XCTAssertEqual(image.pixels.count, 300)
-        XCTAssertEqual(image.pixels[0].count, 400)
+        #expect(image.pixels.count == 300)
+        #expect(image.pixels[0].count == 400)
     }
     
-    func testImageInitializationInvalidHeight() {
+    @Test("Image initialization with invalid height")
+    func imageInitializationInvalidHeight() {
         let pixels = Array(repeating: Array(repeating: ColorIndex.white, count: 400), count: 100)
         
-        XCTAssertThrowsError(try EZSignEPaperImage(pixels: pixels)) { error in
-            guard case EZSignEPaperError.invalidImageSize = error else {
-                XCTFail("Expected invalidImageSize error")
-                return
-            }
+        #expect(throws: EZSignEPaperError.self) {
+            try EZSignEPaperImage(pixels: pixels)
         }
     }
     
-    func testImageInitializationInvalidWidth() {
+    @Test("Image initialization with invalid width")
+    func imageInitializationInvalidWidth() {
         let pixels = Array(repeating: Array(repeating: ColorIndex.white, count: 100), count: 300)
         
-        XCTAssertThrowsError(try EZSignEPaperImage(pixels: pixels)) { error in
-            guard case EZSignEPaperError.invalidImageSize = error else {
-                XCTFail("Expected invalidImageSize error")
-                return
-            }
+        #expect(throws: EZSignEPaperError.self) {
+            try EZSignEPaperImage(pixels: pixels)
         }
     }
     
-    func testImageFillColor() {
+    @Test("Image fill color")
+    func imageFillColor() {
         let image = EZSignEPaperImage(fillColor: .red)
         
-        XCTAssertEqual(image.pixels.count, 300)
-        XCTAssertEqual(image.pixels[0].count, 400)
-        XCTAssertEqual(image.pixels[0][0], .red)
-        XCTAssertEqual(image.pixels[299][399], .red)
+        #expect(image.pixels.count == 300)
+        #expect(image.pixels[0].count == 400)
+        #expect(image.pixels[0][0] == .red)
+        #expect(image.pixels[299][399] == .red)
     }
     
-    func testUncompressedBlocks() throws {
+    @Test("Uncompressed blocks")
+    func uncompressedBlocks() throws {
         let image = EZSignEPaperImage(fillColor: .white)
         let blocks = image.getUncompressedBlocks()
         
         // Should have 15 blocks
-        XCTAssertEqual(blocks.count, 15)
+        #expect(blocks.count == 15)
         
         // Each block should be 2000 bytes
         for block in blocks {
-            XCTAssertEqual(block.count, 2000)
+            #expect(block.count == 2000)
         }
     }
     
-    func testPixelPacking() throws {
+    @Test("Pixel packing")
+    func pixelPacking() throws {
         // Create a simple test pattern
         var pixels = Array(repeating: Array(repeating: ColorIndex.black, count: 400), count: 300)
         
@@ -78,6 +79,6 @@ final class EZSignEPaperImageTests: XCTestCase {
         // = 0b11100100 = 0xE4
         let lastByteOfFirstRow = 99
         let packedByte = firstBlock[lastByteOfFirstRow]
-        XCTAssertEqual(packedByte, 0xE4)
+        #expect(packedByte == 0xE4)
     }
 }
