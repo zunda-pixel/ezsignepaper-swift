@@ -33,7 +33,6 @@ public class LZOCompressor: DataCompressor {
     private func mockCompress(_ data: Data) throws -> Data {
         // Simple mock compression for testing
         // Returns the original data prefixed with a simple header
-        var result = Data()
         
         // Check for runs of identical bytes
         var compressed = Data()
