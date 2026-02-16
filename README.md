@@ -9,17 +9,18 @@ This library provides a generic Swift interface for the 400x300 4-color (Black, 
 ## Features
 
 - ✅ Support for 400x300 pixel displays with 4 colors
-- ✅ NFC communication via CoreNFC (iOS 14+)
+- ✅ NFC communication via CoreNFC (iOS 18+)
 - ✅ Image data compression and automatic fragmentation
 - ✅ Automatic update polling and completion detection
-- ✅ Clean async/await API
+- ✅ Clean async/await API with Swift Concurrency support
+- ✅ Full Sendable conformance for thread-safe operation
 - ✅ Mock transceivers for testing
 - ✅ Comprehensive error handling
 
 ## Requirements
 
-- Swift 5.9+
-- iOS 14.0+ / macOS 11.0+
+- Swift 6.0+
+- iOS 18.0+ / macOS 15.0+
 - For NFC functionality: iOS device with NFC capability
 
 ## Installation

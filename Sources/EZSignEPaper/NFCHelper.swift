@@ -5,12 +5,13 @@ import CoreNFC
 /// Helper class for managing NFC sessions for EZ Sign EPaper
 /// Note: According to the spec, NFCTagReaderSession.connect(to:) disconnects after 20 seconds.
 /// To handle long operations, you may need to use restartPolling() and re-authenticate.
-@available(iOS 14.0, *)
-public class EZSignEPaperNFCHelper: NSObject {
+@available(iOS 18.0, *)
+@MainActor
+public final class EZSignEPaperNFCHelper: NSObject, @unchecked Sendable {
     private var session: NFCTagReaderSession?
     private var currentTag: NFCISO7816Tag?
-    private var onTagDiscovered: ((NFCISO7816Tag) -> Void)?
-    private var onError: ((Error) -> Void)?
+    private var onTagDiscovered: (@Sendable (NFCISO7816Tag) -> Void)?
+    private var onError: (@Sendable (Error) -> Void)?
     
     public override init() {
         super.init()
@@ -22,8 +23,8 @@ public class EZSignEPaperNFCHelper: NSObject {
     ///   - onTagDiscovered: Callback when tag is discovered
     ///   - onError: Callback when error occurs
     public func startSession(alertMessage: String = "Hold your iPhone near the e-paper display",
-                            onTagDiscovered: @escaping (NFCISO7816Tag) -> Void,
-                            onError: @escaping (Error) -> Void) {
+                            onTagDiscovered: @escaping @Sendable (NFCISO7816Tag) -> Void,
+                            onError: @escaping @Sendable (Error) -> Void) {
         guard NFCTagReaderSession.readingAvailable else {
             onError(EZSignEPaperError.communicationError("NFC not available on this device"))
             return
@@ -54,7 +55,7 @@ public class EZSignEPaperNFCHelper: NSObject {
     }
 }
 
-@available(iOS 14.0, *)
+@available(iOS 18.0, *)
 extension EZSignEPaperNFCHelper: NFCTagReaderSessionDelegate {
     public func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {
         // Session is ready
@@ -67,7 +68,9 @@ extension EZSignEPaperNFCHelper: NFCTagReaderSessionDelegate {
             return
         }
         
-        onError?(error)
+        Task { @MainActor in
+            self.onError?(error)
+        }
     }
     
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
@@ -84,20 +87,25 @@ extension EZSignEPaperNFCHelper: NFCTagReaderSessionDelegate {
         session.connect(to: firstTag) { [weak self] error in
             if let error = error {
                 session.invalidate(errorMessage: "Connection failed: \(error.localizedDescription)")
-                self?.onError?(error)
+                Task { @MainActor in
+                    self?.onError?(error)
+                }
                 return
             }
             
-            self?.currentTag = tag
-            self?.onTagDiscovered?(tag)
+            Task { @MainActor in
+                self?.currentTag = tag
+                self?.onTagDiscovered?(tag)
+            }
         }
     }
 }
 
 /// Convenience method for updating display via NFC
 /// This handles the NFC session lifecycle and update process
-@available(iOS 14.0, *)
-public class EZSignEPaperNFCUpdater {
+@available(iOS 18.0, *)
+@MainActor
+public final class EZSignEPaperNFCUpdater: @unchecked Sendable {
     private let helper: EZSignEPaperNFCHelper
     private let compressor: DataCompressor
     
@@ -117,9 +125,9 @@ public class EZSignEPaperNFCUpdater {
     public func updateDisplay(_ image: EZSignEPaperImage,
                              alertMessage: String = "Hold your iPhone near the e-paper display",
                              needsPollingRestart: Bool = true,
-                             onProgress: ((String) -> Void)? = nil,
-                             onComplete: @escaping () -> Void,
-                             onError: @escaping (Error) -> Void) {
+                             onProgress: (@Sendable (String) -> Void)? = nil,
+                             onComplete: @escaping @Sendable () -> Void,
+                             onError: @escaping @Sendable (Error) -> Void) {
         helper.startSession(alertMessage: alertMessage) { [weak self] tag in
             guard let self = self else { return }
             
@@ -139,7 +147,9 @@ public class EZSignEPaperNFCUpdater {
                     // Step 3: Restart polling if needed (to get another 20 seconds)
                     if needsPollingRestart {
                         onProgress?("Reconnecting...")
-                        self.helper.restartPolling()
+                        await MainActor.run {
+                            self.helper.restartPolling()
+                        }
                         
                         // Wait a bit for reconnection
                         try await Task.sleep(nanoseconds: 1_000_000_000)
@@ -157,11 +167,15 @@ public class EZSignEPaperNFCUpdater {
                     try await controller.waitForUpdateCompletion(maxAttempts: 60, pollingInterval: 1.0)
                     
                     onProgress?("Update completed!")
-                    self.helper.invalidateSession()
+                    await MainActor.run {
+                        self.helper.invalidateSession()
+                    }
                     onComplete()
                     
                 } catch {
-                    self.helper.invalidateSession(errorMessage: "Update failed: \(error.localizedDescription)")
+                    await MainActor.run {
+                        self.helper.invalidateSession(errorMessage: "Update failed: \(error.localizedDescription)")
+                    }
                     onError(error)
                 }
             }

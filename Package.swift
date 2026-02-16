@@ -1,11 +1,11 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
     name: "EZSignEPaper",
     platforms: [
-        .iOS(.v14),
-        .macOS(.v11)
+        .iOS(.v18),
+        .macOS(.v15)
     ],
     products: [
         .library(
@@ -18,11 +18,17 @@ let package = Package(
     targets: [
         .target(
             name: "EZSignEPaper",
-            dependencies: []
+            dependencies: [],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]
         ),
         .testTarget(
             name: "EZSignEPaperTests",
-            dependencies: ["EZSignEPaper"]
+            dependencies: ["EZSignEPaper"],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]
         ),
     ]
 )

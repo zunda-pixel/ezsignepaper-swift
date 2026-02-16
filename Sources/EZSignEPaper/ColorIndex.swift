@@ -1,7 +1,7 @@
 import Foundation
 
 /// Color index for EZ Sign EPaper display (2-bit color)
-public enum ColorIndex: UInt8 {
+public enum ColorIndex: UInt8, Sendable {
     case black = 0
     case white = 1
     case yellow = 2

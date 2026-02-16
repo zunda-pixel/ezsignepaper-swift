@@ -4,9 +4,9 @@ import XCTest
 final class EZSignEPaperControllerTests: XCTestCase {
     func testAuthenticateSuccess() async throws {
         let transceiver = MockAPDUTransceiver()
-        transceiver.responses = [
+        await transceiver.setResponses([
             APDUResponse(data: Data(), sw1: 0x90, sw2: 0x00)
-        ]
+        ])
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         try await controller.authenticate()
@@ -16,9 +16,9 @@ final class EZSignEPaperControllerTests: XCTestCase {
     
     func testAuthenticateFailure() async {
         let transceiver = MockAPDUTransceiver()
-        transceiver.responses = [
+        await transceiver.setResponses([
             APDUResponse(data: Data(), sw1: 0x67, sw2: 0x00)
-        ]
+        ])
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         
@@ -34,9 +34,9 @@ final class EZSignEPaperControllerTests: XCTestCase {
     
     func testStartUpdate() async throws {
         let transceiver = MockAPDUTransceiver()
-        transceiver.responses = [
+        await transceiver.setResponses([
             APDUResponse(data: Data(), sw1: 0x90, sw2: 0x00)
-        ]
+        ])
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         try await controller.startUpdate()
@@ -44,9 +44,9 @@ final class EZSignEPaperControllerTests: XCTestCase {
     
     func testPollUpdateStatusUpdating() async throws {
         let transceiver = MockAPDUTransceiver()
-        transceiver.responses = [
+        await transceiver.setResponses([
             APDUResponse(data: Data([0x01]), sw1: 0x90, sw2: 0x00)
-        ]
+        ])
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         let status = try await controller.pollUpdateStatus()
@@ -60,9 +60,9 @@ final class EZSignEPaperControllerTests: XCTestCase {
     
     func testPollUpdateStatusCompleted() async throws {
         let transceiver = MockAPDUTransceiver()
-        transceiver.responses = [
+        await transceiver.setResponses([
             APDUResponse(data: Data([0x00]), sw1: 0x90, sw2: 0x00)
-        ]
+        ])
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         let status = try await controller.pollUpdateStatus()
@@ -77,11 +77,11 @@ final class EZSignEPaperControllerTests: XCTestCase {
     func testWaitForUpdateCompletion() async throws {
         let transceiver = MockAPDUTransceiver()
         // First two polls return updating, third returns completed
-        transceiver.responses = [
+        await transceiver.setResponses([
             APDUResponse(data: Data([0x01]), sw1: 0x90, sw2: 0x00), // updating
             APDUResponse(data: Data([0x01]), sw1: 0x90, sw2: 0x00), // updating
             APDUResponse(data: Data([0x00]), sw1: 0x90, sw2: 0x00)  // completed
-        ]
+        ])
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         try await controller.waitForUpdateCompletion(maxAttempts: 10, pollingInterval: 0.01)
@@ -90,7 +90,7 @@ final class EZSignEPaperControllerTests: XCTestCase {
     func testWaitForUpdateTimeout() async {
         let transceiver = MockAPDUTransceiver()
         // Always return updating
-        transceiver.responses = Array(repeating: APDUResponse(data: Data([0x01]), sw1: 0x90, sw2: 0x00), count: 10)
+        await transceiver.setResponses(Array(repeating: APDUResponse(data: Data([0x01]), sw1: 0x90, sw2: 0x00), count: 10))
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         
@@ -128,7 +128,7 @@ final class EZSignEPaperControllerTests: XCTestCase {
         // 4. Poll status (completed immediately)
         responses.append(APDUResponse(data: Data([0x00]), sw1: 0x90, sw2: 0x00))
         
-        transceiver.responses = responses
+        await transceiver.setResponses(responses)
         
         let controller = EZSignEPaperController(transceiver: transceiver, compressor: NoCompressor())
         try await controller.authenticateAndUpdate(image, maxAttempts: 10, pollingInterval: 0.01)

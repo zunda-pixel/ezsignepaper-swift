@@ -1,7 +1,7 @@
 import Foundation
 
 /// Protocol for APDU communication with the e-paper display
-public protocol APDUTransceiver {
+public protocol APDUTransceiver: Sendable {
     /// Send APDU command and receive response
     /// - Parameter apdu: APDU command to send
     /// - Returns: APDU response
@@ -13,8 +13,8 @@ public protocol APDUTransceiver {
 import CoreNFC
 
 /// NFC-based APDU transceiver using CoreNFC
-@available(iOS 14.0, *)
-public class NFCAPDUTransceiver: APDUTransceiver {
+@available(iOS 18.0, *)
+public final class NFCAPDUTransceiver: APDUTransceiver, @unchecked Sendable {
     private let tag: NFCISO7816Tag
     
     public init(tag: NFCISO7816Tag) {
@@ -47,11 +47,20 @@ public class NFCAPDUTransceiver: APDUTransceiver {
 #endif
 
 /// Mock APDU transceiver for testing
-public class MockAPDUTransceiver: APDUTransceiver {
-    public var responses: [APDUResponse] = []
+public actor MockAPDUTransceiver: APDUTransceiver {
+    private var responses: [APDUResponse] = []
     private var responseIndex = 0
     
     public init() {}
+    
+    public init(responses: [APDUResponse]) {
+        self.responses = responses
+    }
+    
+    public func setResponses(_ responses: [APDUResponse]) {
+        self.responses = responses
+        self.responseIndex = 0
+    }
     
     public func transceive(_ apdu: APDU) async throws -> APDUResponse {
         guard responseIndex < responses.count else {

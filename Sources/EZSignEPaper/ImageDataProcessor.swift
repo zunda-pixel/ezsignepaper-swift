@@ -1,7 +1,7 @@
 import Foundation
 
 /// Represents a fragment of compressed block data
-public struct ImageDataFragment {
+public struct ImageDataFragment: Sendable {
     public let blockNo: UInt8
     public let fragNo: UInt8
     public let data: Data
@@ -16,7 +16,7 @@ public struct ImageDataFragment {
 }
 
 /// Process image data into compressed fragments ready for transmission
-public class ImageDataProcessor {
+public final class ImageDataProcessor: Sendable {
     private let compressor: DataCompressor
     
     public init(compressor: DataCompressor = LZOCompressor()) {

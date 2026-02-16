@@ -1,7 +1,7 @@
 import Foundation
 
 /// Image representation for EZ Sign EPaper
-public struct EZSignEPaperImage {
+public struct EZSignEPaperImage: Sendable {
     /// Pixel data as color indices (row-major order: [y][x])
     public let pixels: [[ColorIndex]]
     
@@ -74,7 +74,7 @@ public struct EZSignEPaperImage {
 }
 
 /// Errors for EZ Sign EPaper operations
-public enum EZSignEPaperError: Error, LocalizedError {
+public enum EZSignEPaperError: Error, LocalizedError, Sendable {
     case invalidImageSize(String)
     case compressionFailed(String)
     case communicationError(String)

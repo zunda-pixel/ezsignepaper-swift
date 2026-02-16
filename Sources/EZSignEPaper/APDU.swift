@@ -1,7 +1,7 @@
 import Foundation
 
 /// APDU command for ISO7816 communication
-public struct APDU {
+public struct APDU: Sendable {
     public let cla: UInt8
     public let ins: UInt8
     public let p1: UInt8
@@ -34,7 +34,7 @@ public struct APDU {
 }
 
 /// APDU response
-public struct APDUResponse {
+public struct APDUResponse: Sendable {
     public let data: Data
     public let sw1: UInt8
     public let sw2: UInt8
@@ -57,7 +57,7 @@ public struct APDUResponse {
 }
 
 /// APDU command factory for EZ Sign EPaper
-public enum EZSignEPaperCommand {
+public enum EZSignEPaperCommand: Sendable {
     /// Authentication command: 0020 00010420091210
     public static func authenticate() -> APDU {
         let data = Data([0x04, 0x20, 0x09, 0x12, 0x10])

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Protocol for data compression
-public protocol DataCompressor {
+public protocol DataCompressor: Sendable {
     /// Compress data using LZO1X-1 algorithm
     /// - Parameter data: Uncompressed data
     /// - Returns: Compressed data
@@ -12,7 +12,7 @@ public protocol DataCompressor {
 /// Default LZO compressor implementation
 /// Note: This requires lzo library to be available
 /// For production use, link against lzo library or use a Swift wrapper
-public class LZOCompressor: DataCompressor {
+public final class LZOCompressor: DataCompressor {
     public init() {}
     
     public func compress(_ data: Data) throws -> Data {
@@ -65,7 +65,7 @@ public class LZOCompressor: DataCompressor {
 }
 
 /// No compression (pass-through) - for testing
-public class NoCompressor: DataCompressor {
+public final class NoCompressor: DataCompressor {
     public init() {}
     
     public func compress(_ data: Data) throws -> Data {

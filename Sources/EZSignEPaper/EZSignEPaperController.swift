@@ -1,13 +1,13 @@
 import Foundation
 
 /// Update status result from polling
-public enum UpdateStatus {
+public enum UpdateStatus: Sendable {
     case updating
     case completed
 }
 
 /// Main controller for EZ Sign EPaper display operations
-public class EZSignEPaperController {
+public final class EZSignEPaperController: Sendable {
     private let transceiver: APDUTransceiver
     private let processor: ImageDataProcessor
     
