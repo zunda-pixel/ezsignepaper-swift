@@ -1,4 +1,5 @@
 import Foundation
+import Algorithms
 
 /// Represents a fragment of compressed block data
 public struct ImageDataFragment: Sendable {
@@ -51,29 +52,17 @@ public final class ImageDataProcessor: Sendable {
             throw EZSignEPaperError.invalidImageSize("Block number \(blockNo) out of range")
         }
         
-        var fragments: [ImageDataFragment] = []
-        var offset = 0
-        var fragNo: UInt8 = 0
+        let chunks = compressedData.chunks(ofCount: DisplayConstants.maxFragmentSize)
+        let totalChunks = chunks.count
         
-        while offset < compressedData.count {
-            let remainingBytes = compressedData.count - offset
-            let fragmentSize = min(remainingBytes, DisplayConstants.maxFragmentSize)
-            let fragmentData = compressedData.subdata(in: offset..<(offset + fragmentSize))
-            let isLast = (offset + fragmentSize) >= compressedData.count
-            
-            let fragment = ImageDataFragment(
+        return chunks.enumerated().map { (index, chunk) in
+            ImageDataFragment(
                 blockNo: blockNo,
-                fragNo: fragNo,
-                data: fragmentData,
-                isLastFragment: isLast
+                fragNo: UInt8(index),
+                data: Data(chunk),
+                isLastFragment: index == totalChunks - 1
             )
-            
-            fragments.append(fragment)
-            offset += fragmentSize
-            fragNo += 1
         }
-        
-        return fragments
     }
     
     /// Convert fragments to APDU commands

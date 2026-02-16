@@ -16,12 +16,17 @@ This library provides a generic Swift interface for the 400x300 4-color (Black, 
 - ✅ Full Sendable conformance for thread-safe operation
 - ✅ Mock transceivers for testing
 - ✅ Comprehensive error handling
+- ✅ Uses Swift Algorithms for efficient data processing
 
 ## Requirements
 
 - Swift 6.0+
 - iOS 18.0+ / macOS 15.0+
 - For NFC functionality: iOS device with NFC capability
+
+## Dependencies
+
+- [Swift Algorithms](https://github.com/apple/swift-algorithms) - For efficient chunking and data processing
 
 ## Installation
 

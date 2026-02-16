@@ -14,11 +14,14 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.2.0"),
     ],
     targets: [
         .target(
             name: "EZSignEPaper",
-            dependencies: [],
+            dependencies: [
+                .product(name: "Algorithms", package: "swift-algorithms"),
+            ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ]

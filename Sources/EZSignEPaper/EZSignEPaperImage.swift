@@ -1,4 +1,5 @@
 import Foundation
+import Algorithms
 
 /// Image representation for EZ Sign EPaper
 public struct EZSignEPaperImage: Sendable {
@@ -38,14 +39,13 @@ public struct EZSignEPaperImage: Sendable {
             var rowData = Data()
             rowData.reserveCapacity(DisplayConstants.bytesPerRow)
             
-            // Process pixels in groups of 4, left to right
-            for pixelStart in stride(from: 0, to: DisplayConstants.width, by: 4) {
-                let p0 = row[pixelStart + 0].rawValue2Bit
-                let p1 = row[pixelStart + 1].rawValue2Bit
-                let p2 = row[pixelStart + 2].rawValue2Bit
-                let p3 = row[pixelStart + 3].rawValue2Bit
-                
-                let byte = p0 | (p1 << 2) | (p2 << 4) | (p3 << 6)
+            // Process pixels in groups of 4 using swift-algorithms
+            for chunk in row.chunks(ofCount: 4) {
+                let pixelValues = chunk.map { $0.rawValue2Bit }
+                let byte = pixelValues[0] 
+                    | (pixelValues[1] << 2) 
+                    | (pixelValues[2] << 4) 
+                    | (pixelValues[3] << 6)
                 rowData.append(byte)
             }
             
